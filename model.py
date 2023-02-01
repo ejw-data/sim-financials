@@ -1,4 +1,35 @@
+# https://www.yahoo.com/finance/news/housing-heres-what-it-will-take-to-buy-a-home-this-year-165050707.html
+# functionality:
+#    1.  buy car include maintenance
+#    2.  sell car
+#    3.  
+#    4.  buy house include maintenance
+#    5.  sell house
+#    6.  
+#    7.  rent apartment
+#    8.  save retirement 401K (index fund)
+#    9.  save retirement bond
+#   10.  buy investment property
+#   11.  rent investment property
+#   12.  Children birth/early years
+#   12.  Children college
+#   12.  Children safety net
+#   13.  move to new city
+#   14.  taxes
+#   15.  food and groceries
+#   16.  cell phone
+#   17.  pets
+#   18.  entertainment
+#   19.  public transportation
+#   20.  health insurance
+#   21.  education expenses
+#   22.  education loan expenses
+#   23.  side hustle income
+#   24.  
+
 from time_value import *
+import itertools
+
 class estimator:
 
     # used to collect instance settings
@@ -19,6 +50,26 @@ class estimator:
     def add_results(self, totals):
         self.results.append(totals)
 
+    # INCOME ---------------------------
+    
+    def add_income():
+        """
+        Function used to add recurring income like a salary
+        Do I need to make this an object for tracking
+        """
+        return 1
+    
+    def one_off_income():
+        return 1
+    
+    def update_income():
+        return 1
+    
+    def remove_income():
+        return 1
+
+    # ASSETS ---------------------------
+    # HOUSE Calcs
     def add_house(self, selling_price, downpayment, interst_rate, length_loan):
         # https://www.bankrate.com/mortgages/costs-of-buying-a-home/#ongoing
         
@@ -43,5 +94,64 @@ class estimator:
         # if older home then home waranty insurance
         return 1
     
+    # CARS Ownership Calcs
+    def add_vehicle(purchase_year, vehicle_year, model, type, loan):
+        # year, age of vehicle, model, 
+        # 
+
+        # ml:  how long before not operatable
+        return 1
+    
+        # RETIREMENT Calcs
+    def add_401k():
+        """
+        No need to calculate withdrawal
+        """
+
+        # calc PV - probably don't need
+        # calc FV
+        # do I need to calculated just with for loop
+        return 1
+    
+    def add_stock():
+        return 1
+    
+    def add_bond(principle, coupon_rate, annual_compounding_terms, term):
+        increased_value_per_compound_period = principle*(coupon_rate/annual_compounding_terms)
+        n_periods = annual_compounding_terms*term
+
+        # present_value
+        # future_value at maturation
+        # add to an ongoing tracker
+        # should I calculate all values at once or calculate year-by-year
+        return 1
+    
+
+    # EXPENSES  ---------------------------
+    
+    # APARTMENT Rental Calcs
+    def add_apartment():
+        return 1
+    
+    # INCOME TAXES
+    # probably need to make this a function of each income
+    # and track as a class variable
+    
+
+    # GENERAL Calcs
 
     
+    # INNER CLASSES  ---------------------------
+    class income_source():
+        """
+        Stores income source id and salary and method of updating
+        Hopefully an easy way of accessing
+        """
+        unique_id = itertools.count()
+
+        def __init__(self, monthly_income):
+            self.income_id = next(self.unique_id)
+            self.monthly_income = monthly_income
+
+        def update_income(self, new_income):
+            self.monthly_income = new_income
