@@ -20,27 +20,44 @@ class estimator:
 
     """
     https://www.geeksforgeeks.org/how-to-create-a-list-of-object-in-python-class/
-    setup={l:v, k:v, 
-            balance_sheet:[
-                {year: 2015, 
-                 income:[
-                    {income_source1: #, id},
-                    {income_source2: #}
-                 ]
-                }
-            ]
+    setup={ id: sim_id
+            meta: {start_year: #, end_year: #, sim_length: #, retirement_year: # }
+            balance_sheet:{
+                2015: 
+                    {income:[
+                        {income_source1: #, employer:xxx},
+                        {income_source2: #}
+                        ],
+                    expenses:[],
+                    assets:[]
+                    }
+                
+            }
           }
     """
+    # setup up the above structure first
+    
     def __init__(self):
         self.sim_id = next(self.simulation_id)
         self.setup = {}
 
     def init(self, start_year, retirement_year, sim_length ):
         self.setup['id'] = self.sim_id
-        self.setup['start_year'] = start_year
-        self.setup['end_year'] = start_year + sim_length
-        self.setup['simulation_length'] = sim_length
-        self.setup['retirement_year'] = retirement_year
+        self.setup['balance_sheet']={}
+        self.setup['meta']={}
+        self.setup['meta']['start_year'] = start_year
+        self.setup['meta']['end_year'] = start_year + sim_length
+        self.setup['meta']['simulation_length'] = sim_length
+        self.setup['meta']['retirement_year'] = retirement_year
+
+        for i in range(sim_length):
+            balance_sheet_dict={}
+            balance_sheet_dict['income']=[]
+            balance_sheet_dict['expenses']=[]
+            balance_sheet_dict['assets']=[]
+
+            year = start_year+i
+            self.setup['balance_sheet'][year]=balance_sheet_dict
 
     def add_inputs(self, parameters):
         self.inputs.append(parameters)
@@ -85,11 +102,20 @@ class estimator:
         Stores income source id and salary and method of updating
         Hopefully an easy way of accessing
         """
+
         income_id = itertools.count()
 
-        def __init__(self, monthly_income):
+        def __init__(self, employer, monthly_income, hire_year, growth):
             self.income_id = f"i{next(self.income_id)}"
+            self.employer = employer
             self.monthly_income = monthly_income
-        
+
+            # # calc income per year
+            # for i in len(self.setup['simulation_length']):
+            #     if (i <= hire_year - self.setup['start_year'] ):
+            #         annual_income = 0
+            #     else:
+            #         annual_income = (monthly_income*12)*(1+growth)^(hire_year - (i + self.setup['start_year']))
+            #         self.setup['balance_sheet'].where(eoy == (i + self.setup['start_year']))
         def update_income(self, new_income):
             self.monthly_income = new_income
