@@ -25,8 +25,8 @@ class estimator:
             balance_sheet:{
                 2015: 
                     {income:[
-                        {income_source1: #, employer:xxx},
-                        {income_source2: #}
+                        {amount: #, source:xxx},
+                        {amount: #, source:xxx}
                         ],
                     expenses:[],
                     assets:[]
@@ -40,6 +40,14 @@ class estimator:
     def __init__(self):
         self.sim_id = next(self.simulation_id)
         self.setup = {}
+
+    def __repr__(self) -> str:
+        # in future put future value at retirement
+        # should I use @dataclass to simplify things
+        # https://www.youtube.com/watch?v=ojrbuVKblew
+        # https://www.youtube.com/watch?v=Vj-iU-8_xLs
+        # https://www.youtube.com/watch?v=RZPbPYM1HuE
+        return f"Simulation ID: {self.sim_id}"
 
     def init(self, start_year, retirement_year, sim_length ):
         self.setup['id'] = self.sim_id
@@ -71,20 +79,31 @@ class estimator:
 
     # INCOME ---------------------------
     
-    def add_income(self, base, growth, start_year):
+    def add_income(self, employer, base, growth, start_year):
         """
         Function used to add recurring income like a salary
         Do I need to make this an object for tracking
         """
-        self.income_source(25000)
+        # self.income_source(employer, base)
 
-        return [ base*(1+growth)^i for i in range(len(self.setup['retirement_year'] - start_year))]
+        for i in range(start_year, self.setup['meta']['retirement_year'] + 1):
+            income_record = {'source':employer, 'amount':round(base*(1+growth)**(i - start_year),2)}
+            self.setup['balance_sheet'][i]['income'].append(income_record)
+
+        # return [ base*(1+growth)^i for i in range(len(self.setup['retirement_year'] - start_year))]
     
-    def one_off_income():
-        return 10000
+    def one_off_income(self, description, amount, year):
+        income_record = {'source':description, 'amount': amount}
+        self.setup['balance_sheet'][year]['income'].append(income_record)
     
-    def update_income(self, base, growth, start_year):
-        return 1
+    def update_income(self, employer, base, growth, start_year):
+        for i in range(start_year, self.setup['meta']['retirement_year'] + 1):
+            work_experience = self.setup['balance_sheet'][i]['income']
+            for j in range(len(work_experience)):
+                if (work_experience[j]['source']==employer) and (base > 0):
+                    work_experience[j]['amount'] = round(base*(1+growth)**(i - start_year),2)
+                elif (work_experience[j]['source']==employer) and (base <= 0):
+                    del work_experience[j]
     
     def remove_income():
         return 1
