@@ -50,7 +50,7 @@ class estimator:
         # https://www.youtube.com/watch?v=RZPbPYM1HuE
         return f"Simulation ID: {self.sim_id}"
 
-    def init(self, start_year, retirement_year, sim_length ):
+    def init(self, start_year, retirement_year, sim_length, start_savings ):
         self.setup['id'] = self.sim_id
         self.setup['balance_sheet']={}
         self.setup['meta']={}
@@ -68,6 +68,7 @@ class estimator:
 
             year = start_year+i
             self.setup['balance_sheet'][year]=balance_sheet_dict
+            self.setup['balance_sheet'][year]['assets'].append({'savings': start_savings})
 
     def add_inputs(self, parameters):
         self.inputs.append(parameters)
@@ -111,11 +112,22 @@ class estimator:
         Do I need to make this an object for tracking
         """
         # self.income_source(employer, base)
+        total = 0
+        for year in range(start_year, self.setup['meta']['retirement_year'] + 1):
+            amount = round(base*(1+growth)**(year - start_year),2)
+            total += amount
+            income_record = {'source':employer, 'amount':amount}
+            self.setup['balance_sheet'][year]['income'].append(income_record)
+            
+            current_savings = self.setup['balance_sheet'][year]['assets']
+            for i in range(len(current_savings)):
+                if 'savings' in current_savings[i].keys():
+                    current_savings[i]['savings'] = current_savings[i]['savings'] + total
 
-        for i in range(start_year, self.setup['meta']['retirement_year'] + 1):
-            income_record = {'source':employer, 'amount':round(base*(1+growth)**(i - start_year),2)}
-            self.setup['balance_sheet'][i]['income'].append(income_record)
 
+
+            
+            # self.setup['balance_sheet'][year]['assets']['savings'] = 
         # return [ base*(1+growth)^i for i in range(len(self.setup['retirement_year'] - start_year))]
     
     def one_off_income(self, description, amount, year):
@@ -154,19 +166,40 @@ class estimator:
             end_amount = (end.month - 1)*monthly_amount
             annual_amount = monthly_amount*12
             years = range(start.year, end.year+1)
+            total = 0
             for year in years:
                 expense_list = self.setup['balance_sheet'][year]['expenses']
                 if year == start.year:
+                    total += start_amount
                     expense_list.append({'source':'apartment rent', 'amount':start_amount})
+                    current_savings = self.setup['balance_sheet'][year]['assets']
+                    for i in range(len(current_savings)):
+                        if 'savings' in current_savings[i].keys():
+                            current_savings[i]['savings'] = current_savings[i]['savings'] - total
                 elif year == end.year:
+                    total += end_amount
                     expense_list.append({'source':'apartment rent', 'amount':end_amount})
+                    current_savings = self.setup['balance_sheet'][year]['assets']
+                    for i in range(len(current_savings)):
+                        if 'savings' in current_savings[i].keys():
+                            current_savings[i]['savings'] = current_savings[i]['savings'] - total
                 else:
+                    total += annual_amount
                     expense_list.append({'source':'apartment rent', 'amount':annual_amount})
+                    current_savings = self.setup['balance_sheet'][year]['assets']
+                    for i in range(len(current_savings)):
+                        if 'savings' in current_savings[i].keys():
+                            current_savings[i]['savings'] = current_savings[i]['savings'] - total
         else:
             annual_amount = (end.month - start.month-1)*monthly_amount
             year = start.year
             expense_list = self.setup['balance_sheet'][year]['expenses']
             expense_list.append({'source':'apartment rent', 'amount': annual_amount})
+            
+            current_savings = self.setup['balance_sheet'][year]['assets']
+            for i in range(len(current_savings)):
+                if 'savings' in current_savings[i].keys():
+                    current_savings[i]['savings'] = current_savings[i]['savings'] - annual_amount
 
     # ASSETS
     # HOUSE Purchase

@@ -2,7 +2,7 @@ from test_model import estimator
 
 e1 = estimator()
 
-e1.init(2015, 2022, 10)
+e1.init(2015, 2022, 10, 20000)
 e1.add_apartment(1200, "05/2015", "04/2018")
 e1.add_house(300000, 50000, 0.0425, 30, 2019)
 e1.add_income('Grocery United', 3000, 0, 2015)
