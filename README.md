@@ -26,3 +26,23 @@ Other considerations:
     - Excellent analysis could be:  1) Calc annual cash flows and equity for house and apartment.  2) Next calc the savings if the rent savings was used as down payment.  
 
 Designed with OOP so that the processes can be repeated and results stored to get a broad range of aggregated results.
+
+
+
+Data Structure: 
+```
+    setup={ id: sim_id
+            meta: {start_year: #, end_year: #, sim_length: #, retirement_year: # }
+            balance_sheet:{
+                2015: 
+                    {income:[
+                        {amount: #, source:xxx},
+                        {amount: #, source:xxx}
+                        ],
+                    expenses:[],
+                    assets:[]
+                    }
+                
+            }
+          }
+```

@@ -45,8 +45,9 @@ def pv_an(pv,i,n,t):
     n :  number of payments in a year
     t :  number of years 
     '''
-    time_factor = (1 - (1/(1+i/n)**(n*t)))/i
-    an = pv/time_factor
+    time_factor = (1+i/n)**(t*n)
+    interest_adjustment = ( 1 - 1/time_factor )
+    an = (pv*i/n)/interest_adjustment
     return an  
 
 def an_fv(an,i,n,t):

@@ -1,7 +1,7 @@
 
 from time_value import *
 import itertools
-
+from datetime import datetime as dt
 class estimator:
 
     # collect basic info
@@ -29,7 +29,8 @@ class estimator:
                         {amount: #, source:xxx}
                         ],
                     expenses:[],
-                    assets:[]
+                    assets:[],
+                    liabilities:[]
                     }
                 
             }
@@ -63,6 +64,7 @@ class estimator:
             balance_sheet_dict['income']=[]
             balance_sheet_dict['expenses']=[]
             balance_sheet_dict['assets']=[]
+            balance_sheet_dict['liabilities']=[]
 
             year = start_year+i
             self.setup['balance_sheet'][year]=balance_sheet_dict
@@ -77,6 +79,30 @@ class estimator:
     def print_setup(self):
         print(self.setup)
 
+    def print_income(self):
+        income_dict={}
+        start = self.setup['meta']['start_year']
+        end = self.setup['meta']['end_year']
+        for year in range(start, end):
+            income_list = self.setup['balance_sheet'][year]['income']
+            income_sum = 0
+            for incomes in income_list:
+                income_sum += incomes['amount']
+            income_dict[year]= income_sum
+        print(income_dict)
+
+    def print_expenses(self):
+        expenses_dict={}
+        start = self.setup['meta']['start_year']
+        end = self.setup['meta']['end_year']
+        for year in range(start, end):
+            expenses_list = self.setup['balance_sheet'][year]['expenses']
+            expenses_sum = 0
+            for expense in expenses_list:
+                expenses_sum += expense['amount']
+            expenses_dict[year]= expenses_sum
+        print(expenses_dict)
+    
     # INCOME ---------------------------
     
     def add_income(self, employer, base, growth, start_year):
@@ -104,16 +130,80 @@ class estimator:
                     work_experience[j]['amount'] = round(base*(1+growth)**(i - start_year),2)
                 elif (work_experience[j]['source']==employer) and (base <= 0):
                     del work_experience[j]
-    
-    def remove_income():
-        return 1
 
     # EXPENSES  ---------------------------
     
-    # APARTMENT Rental Calcs
-    def add_apartment():
-        return 1
+    # GENERAL Expenses
 
+    def add_general_expense(self, start_year, food=240, tech=35, pet=50):
+        # personal items
+        total = food + tech + pet
+        annual_expense = total*12
+        for year in range(start_year, self.setup['meta']['retirement_year'] + 1):
+            expense_list = self.setup['balance_sheet'][year]['expenses']
+            expense_list.append({'source':'general expense', 'amount': annual_expense})
+      
+
+    # APARTMENT Rental Calcs
+    def add_apartment(self, monthly_amount, start_date, end_date ):
+        start= dt.strptime(start_date, "%m/%Y")
+        end = dt.strptime(end_date, "%m/%Y")
+
+        if start.year != end.year:
+            start_amount = (12- start.month)*monthly_amount
+            end_amount = (end.month - 1)*monthly_amount
+            annual_amount = monthly_amount*12
+            years = range(start.year, end.year+1)
+            for year in years:
+                expense_list = self.setup['balance_sheet'][year]['expenses']
+                if year == start.year:
+                    expense_list.append({'source':'apartment rent', 'amount':start_amount})
+                elif year == end.year:
+                    expense_list.append({'source':'apartment rent', 'amount':end_amount})
+                else:
+                    expense_list.append({'source':'apartment rent', 'amount':annual_amount})
+        else:
+            annual_amount = (end.month - start.month-1)*monthly_amount
+            year = start.year
+            expense_list = self.setup['balance_sheet'][year]['expenses']
+            expense_list.append({'source':'apartment rent', 'amount': annual_amount})
+
+    # ASSETS
+    # HOUSE Purchase
+    def add_house(self, selling_price, down_payment, interest_rate, loan_term, start_year):
+        principle= selling_price - down_payment
+        # monthly mortgage payment
+        mortgage_payment = pv_an(principle, interest_rate, 12, loan_term) 
+        print('Mortgage: ', mortgage_payment)
+        loan_end = start_year + loan_term
+        sim_end = self.setup['meta']['end_year']
+        end_year = sim_end if loan_end > sim_end else loan_end+1
+
+        principle_component=0
+        for year in range(start_year, end_year):
+            interest_component=0
+            
+
+            for month in range(0,12):    
+                interest_update = principle*(interest_rate/12)  
+                interest_component += interest_update
+
+                principle_update = mortgage_payment - interest_update
+                principle_component += principle_update
+
+                principle = principle - principle_update 
+                print("Principle (", year, "/", month, ")", principle_update)
+            
+            expense_list = self.setup['balance_sheet'][year]['expenses']
+            expense_list.append({'source':'mortgage interest', 'amount': round(interest_component,2)})
+
+            expense_list = self.setup['balance_sheet'][year]['assets']
+            expense_list.append({'source':'home equity', 'amount': round(principle_component,2)})
+
+            expense_list = self.setup['balance_sheet'][year]['liabilities']
+            expense_list.append({'source':'home principle', 'amount': round(principle,2)})
+
+    
     
     # INNER CLASSES  ---------------------------
     class income_source():
