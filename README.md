@@ -43,8 +43,8 @@ Data Structure:
                     expenses:[],
                     assets:[
                         {savings:#}
-                    ], 
-                    liabilities
+                        ], 
+                    liabilities[]
                     }
                 
             }
