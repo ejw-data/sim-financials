@@ -27,7 +27,8 @@ Other considerations:
 
 Designed with OOP so that the processes can be repeated and results stored to get a broad range of aggregated results.
 
-
+Dev Notes:
+Calculated assets by updating savings periodically because savings depends on previous year's savings then adding the current year income and subtracing the current year's expenses.
 
 Data Structure: 
 ```
@@ -40,7 +41,10 @@ Data Structure:
                         {amount: #, source:xxx}
                         ],
                     expenses:[],
-                    assets:[]
+                    assets:[
+                        {savings:#}
+                    ], 
+                    liabilities
                     }
                 
             }

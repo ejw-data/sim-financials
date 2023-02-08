@@ -51,6 +51,7 @@ class estimator:
         return f"Simulation ID: {self.sim_id}"
 
     def init(self, start_year, retirement_year, sim_length, start_savings ):
+        self.start_savings = start_savings
         self.setup['id'] = self.sim_id
         self.setup['balance_sheet']={}
         self.setup['meta']={}
@@ -59,16 +60,19 @@ class estimator:
         self.setup['meta']['simulation_length'] = sim_length
         self.setup['meta']['retirement_year'] = retirement_year
 
-        for i in range(sim_length):
+        for year in range(start_year, start_year+sim_length):
             balance_sheet_dict={}
             balance_sheet_dict['income']=[]
             balance_sheet_dict['expenses']=[]
             balance_sheet_dict['assets']=[]
             balance_sheet_dict['liabilities']=[]
 
-            year = start_year+i
+           
             self.setup['balance_sheet'][year]=balance_sheet_dict
-            self.setup['balance_sheet'][year]['assets'].append({'savings': start_savings})
+            if year == start_year:
+                self.setup['balance_sheet'][year]['assets'].append({'savings': start_savings})
+            else:
+                self.setup['balance_sheet'][year]['assets'].append({'savings': 0})
 
     def add_inputs(self, parameters):
         self.inputs.append(parameters)
@@ -103,7 +107,42 @@ class estimator:
                 expenses_sum += expense['amount']
             expenses_dict[year]= expenses_sum
         print(expenses_dict)
+
+    def sum_parameters(self, type, year):
+        param_list = self.setup['balance_sheet'][year][type]
+        param_sum = 0
+        for param in param_list:
+            param_sum += param['amount']
+        return param_sum
+        
+    def balance_sheet_search(self, year, type, key):
+        current_savings = self.setup['balance_sheet'][year][type]
+        for index in range(len(current_savings)):
+            if key in current_savings[index].keys():
+                break
+        return current_savings[index]
     
+    def update_savings(self):
+        start_year = self.setup['meta']['start_year']
+        end_year = self.setup['meta']['retirement_year'] + 1
+        for year in range(start_year, end_year):
+            if year == start_year:
+                past_savings = {'savings': self.start_savings}
+            else:
+                past_savings = self.balance_sheet_search(year-1, 'assets', 'savings')
+            
+            current_savings = self.balance_sheet_search(year, 'assets', 'savings')
+            # add income
+            income = self.sum_parameters("income", year)
+            # subtract expenses
+            expenses = self.sum_parameters("expenses", year)
+            # recalculate savings
+            current_savings['savings'] = past_savings['savings'] + income - expenses 
+            # print("Savings (", year, "): ", past_savings['savings'], income, expenses )
+            # current_savings = self.setup['balance_sheet'][year]['assets']
+            # for i in range(len(current_savings)):
+            #     if 'savings' in current_savings[i].keys():
+            #         current_savings[i]['savings'] = current_savings[i]['savings'] + total 
     # INCOME ---------------------------
     
     def add_income(self, employer, base, growth, start_year):
@@ -119,10 +158,12 @@ class estimator:
             income_record = {'source':employer, 'amount':amount}
             self.setup['balance_sheet'][year]['income'].append(income_record)
             
-            current_savings = self.setup['balance_sheet'][year]['assets']
-            for i in range(len(current_savings)):
-                if 'savings' in current_savings[i].keys():
-                    current_savings[i]['savings'] = current_savings[i]['savings'] + total
+        # make this code its own method 
+        self.update_savings()
+            # current_savings = self.setup['balance_sheet'][year]['assets']
+            # for i in range(len(current_savings)):
+            #     if 'savings' in current_savings[i].keys():
+            #         current_savings[i]['savings'] = current_savings[i]['savings'] + total
 
 
 
@@ -207,7 +248,7 @@ class estimator:
         principle= selling_price - down_payment
         # monthly mortgage payment
         mortgage_payment = pv_an(principle, interest_rate, 12, loan_term) 
-        print('Mortgage: ', mortgage_payment)
+        # print('Mortgage: ', mortgage_payment)
         loan_end = start_year + loan_term
         sim_end = self.setup['meta']['end_year']
         end_year = sim_end if loan_end > sim_end else loan_end+1
@@ -225,7 +266,7 @@ class estimator:
                 principle_component += principle_update
 
                 principle = principle - principle_update 
-                print("Principle (", year, "/", month, ")", principle_update)
+                # print("Principle (", year, "/", month, ")", principle_update)
             
             expense_list = self.setup['balance_sheet'][year]['expenses']
             expense_list.append({'source':'mortgage interest', 'amount': round(interest_component,2)})
