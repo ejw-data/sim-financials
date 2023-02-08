@@ -50,3 +50,9 @@ Data Structure:
             }
           }
 ```
+
+# In future put future value at retirement
+        # should I use @dataclass to simplify things
+        # https://www.youtube.com/watch?v=ojrbuVKblew
+        # https://www.youtube.com/watch?v=Vj-iU-8_xLs
+        # https://www.youtube.com/watch?v=RZPbPYM1HuE

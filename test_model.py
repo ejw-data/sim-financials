@@ -3,51 +3,25 @@ from time_value import *
 import itertools
 from datetime import datetime as dt
 class estimator:
-
-    # collect basic info
-    # sim_length = input('How many years should be simulated?  ')
-    # sim_start_year = input('What year is the initial year?  ')
+    """
+    Class used to estimate personal finances over many years.
+    OOP style so many variations of the same model can be run
+    and collected.
+    """
 
     # sim identifier
     simulation_id = itertools.count()
 
-
-    # used to collect instance settings
+    # used to collect instance settings and outcomes
+    # for running many models with variations. Used in future version.
     inputs = []
-    # [{step: init, param: ()}, {step: add_income, param: ()}, {step: add_house, param: ()}]
-    # used to collect summarized results of each test
     results = []
 
-    """
-    https://www.geeksforgeeks.org/how-to-create-a-list-of-object-in-python-class/
-    setup={ id: sim_id
-            meta: {start_year: #, end_year: #, sim_length: #, retirement_year: # }
-            balance_sheet:{
-                2015: 
-                    {income:[
-                        {amount: #, source:xxx},
-                        {amount: #, source:xxx}
-                        ],
-                    expenses:[],
-                    assets:[],
-                    liabilities:[]
-                    }
-                
-            }
-          }
-    """
-    # setup up the above structure first
-    
     def __init__(self):
         self.sim_id = next(self.simulation_id)
         self.setup = {}
 
     def __repr__(self) -> str:
-        # in future put future value at retirement
-        # should I use @dataclass to simplify things
-        # https://www.youtube.com/watch?v=ojrbuVKblew
-        # https://www.youtube.com/watch?v=Vj-iU-8_xLs
-        # https://www.youtube.com/watch?v=RZPbPYM1HuE
         return f"Simulation ID: {self.sim_id}"
 
     def init(self, start_year, retirement_year, sim_length, start_savings ):
@@ -67,20 +41,22 @@ class estimator:
             balance_sheet_dict['assets']=[]
             balance_sheet_dict['liabilities']=[]
 
-           
             self.setup['balance_sheet'][year]=balance_sheet_dict
+
+            # set initial savings information; note: this structure is different than income/expenses
             if year == start_year:
                 self.setup['balance_sheet'][year]['assets'].append({'savings': start_savings})
             else:
                 self.setup['balance_sheet'][year]['assets'].append({'savings': 0})
 
+    # ADD model inputs/results to list
     def add_inputs(self, parameters):
         self.inputs.append(parameters)
 
     def add_results(self, totals):
         self.results.append(totals)
 
-
+    # PRINT model contents
     def print_setup(self):
         print(self.setup)
 
@@ -89,10 +65,7 @@ class estimator:
         start = self.setup['meta']['start_year']
         end = self.setup['meta']['end_year']
         for year in range(start, end):
-            income_list = self.setup['balance_sheet'][year]['income']
-            income_sum = 0
-            for incomes in income_list:
-                income_sum += incomes['amount']
+            income_sum = self.sum_parameters('income', year)
             income_dict[year]= income_sum
         print(income_dict)
 
@@ -101,10 +74,7 @@ class estimator:
         start = self.setup['meta']['start_year']
         end = self.setup['meta']['end_year']
         for year in range(start, end):
-            expenses_list = self.setup['balance_sheet'][year]['expenses']
-            expenses_sum = 0
-            for expense in expenses_list:
-                expenses_sum += expense['amount']
+            expenses_sum = self.sum_parameters('expenses', year)
             expenses_dict[year]= expenses_sum
         print(expenses_dict)
 
@@ -125,56 +95,47 @@ class estimator:
     def update_savings(self):
         start_year = self.setup['meta']['start_year']
         end_year = self.setup['meta']['retirement_year'] + 1
+
         for year in range(start_year, end_year):
+
+            # more explicit cal using starting savings
             if year == start_year:
                 past_savings = {'savings': self.start_savings}
             else:
                 past_savings = self.balance_sheet_search(year-1, 'assets', 'savings')
             
+            # set location of savings info
             current_savings = self.balance_sheet_search(year, 'assets', 'savings')
-            # add income
+            
+            # calc past savings + all income - all expenses in a year
             income = self.sum_parameters("income", year)
-            # subtract expenses
             expenses = self.sum_parameters("expenses", year)
-            # recalculate savings
             current_savings['savings'] = past_savings['savings'] + income - expenses 
             # print("Savings (", year, "): ", past_savings['savings'], income, expenses )
-            # current_savings = self.setup['balance_sheet'][year]['assets']
-            # for i in range(len(current_savings)):
-            #     if 'savings' in current_savings[i].keys():
-            #         current_savings[i]['savings'] = current_savings[i]['savings'] + total 
+
     # INCOME ---------------------------
     
     def add_income(self, employer, base, growth, start_year):
         """
         Function used to add recurring income like a salary
-        Do I need to make this an object for tracking
         """
-        # self.income_source(employer, base)
         total = 0
         for year in range(start_year, self.setup['meta']['retirement_year'] + 1):
             amount = round(base*(1+growth)**(year - start_year),2)
             total += amount
             income_record = {'source':employer, 'amount':amount}
             self.setup['balance_sheet'][year]['income'].append(income_record)
-            
-        # make this code its own method 
+        
+        # after updating income or expenses then run savings update    
         self.update_savings()
-            # current_savings = self.setup['balance_sheet'][year]['assets']
-            # for i in range(len(current_savings)):
-            #     if 'savings' in current_savings[i].keys():
-            #         current_savings[i]['savings'] = current_savings[i]['savings'] + total
-
-
-
-            
-            # self.setup['balance_sheet'][year]['assets']['savings'] = 
-        # return [ base*(1+growth)^i for i in range(len(self.setup['retirement_year'] - start_year))]
     
     def one_off_income(self, description, amount, year):
         income_record = {'source':description, 'amount': amount}
         self.setup['balance_sheet'][year]['income'].append(income_record)
-    
+
+        # after updating income or expenses then run savings update    
+        self.update_savings()
+
     def update_income(self, employer, base, growth, start_year):
         for i in range(start_year, self.setup['meta']['retirement_year'] + 1):
             work_experience = self.setup['balance_sheet'][i]['income']
@@ -183,6 +144,9 @@ class estimator:
                     work_experience[j]['amount'] = round(base*(1+growth)**(i - start_year),2)
                 elif (work_experience[j]['source']==employer) and (base <= 0):
                     del work_experience[j]
+        
+        # after updating income or expenses then run savings update    
+        self.update_savings()
 
     # EXPENSES  ---------------------------
     
@@ -195,7 +159,9 @@ class estimator:
         for year in range(start_year, self.setup['meta']['retirement_year'] + 1):
             expense_list = self.setup['balance_sheet'][year]['expenses']
             expense_list.append({'source':'general expense', 'amount': annual_expense})
-      
+
+        # after updating income or expenses then run savings update    
+        self.update_savings()
 
     # APARTMENT Rental Calcs
     def add_apartment(self, monthly_amount, start_date, end_date ):
@@ -213,35 +179,20 @@ class estimator:
                 if year == start.year:
                     total += start_amount
                     expense_list.append({'source':'apartment rent', 'amount':start_amount})
-                    current_savings = self.setup['balance_sheet'][year]['assets']
-                    for i in range(len(current_savings)):
-                        if 'savings' in current_savings[i].keys():
-                            current_savings[i]['savings'] = current_savings[i]['savings'] - total
                 elif year == end.year:
                     total += end_amount
                     expense_list.append({'source':'apartment rent', 'amount':end_amount})
-                    current_savings = self.setup['balance_sheet'][year]['assets']
-                    for i in range(len(current_savings)):
-                        if 'savings' in current_savings[i].keys():
-                            current_savings[i]['savings'] = current_savings[i]['savings'] - total
                 else:
                     total += annual_amount
                     expense_list.append({'source':'apartment rent', 'amount':annual_amount})
-                    current_savings = self.setup['balance_sheet'][year]['assets']
-                    for i in range(len(current_savings)):
-                        if 'savings' in current_savings[i].keys():
-                            current_savings[i]['savings'] = current_savings[i]['savings'] - total
         else:
             annual_amount = (end.month - start.month-1)*monthly_amount
             year = start.year
             expense_list = self.setup['balance_sheet'][year]['expenses']
             expense_list.append({'source':'apartment rent', 'amount': annual_amount})
             
-            current_savings = self.setup['balance_sheet'][year]['assets']
-            for i in range(len(current_savings)):
-                if 'savings' in current_savings[i].keys():
-                    current_savings[i]['savings'] = current_savings[i]['savings'] - annual_amount
-
+        # after updating income or expenses then run savings update    
+        self.update_savings()
     # ASSETS
     # HOUSE Purchase
     def add_house(self, selling_price, down_payment, interest_rate, loan_term, start_year):
@@ -270,14 +221,21 @@ class estimator:
             
             expense_list = self.setup['balance_sheet'][year]['expenses']
             expense_list.append({'source':'mortgage interest', 'amount': round(interest_component,2)})
-
+            expense_list.append({'source':'mortgate principle', 'amount': round(principle_component,2)})
+            
             expense_list = self.setup['balance_sheet'][year]['assets']
             expense_list.append({'source':'home equity', 'amount': round(principle_component,2)})
 
             expense_list = self.setup['balance_sheet'][year]['liabilities']
             expense_list.append({'source':'home principle', 'amount': round(principle,2)})
 
+        # after updating income or expenses then run savings update    
+        self.update_savings()
     
+    
+    
+    
+    # EXPERIMENTAL
     
     # INNER CLASSES  ---------------------------
     class income_source():
