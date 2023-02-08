@@ -3,28 +3,29 @@
 #    1.  buy car include maintenance
 #    2.  sell car
 #    3.  
-#    4.  buy house include maintenance
+#    x4.  buy house 
+#    4.  house maintenance
 #    5.  sell house
 #    6.  
-#    7.  rent apartment
+#    x7.  rent apartment
 #    8.  save retirement 401K (index fund)
 #    9.  save retirement bond
 #   10.  buy investment property
 #   11.  rent investment property
 #   12.  Children birth/early years
-#   12.  Children college
+#   x12.  Children college
 #   12.  Children safety net
 #   13.  move to new city
 #   14.  taxes
-#   15.  food and groceries
-#   16.  cell phone
-#   17.  pets
-#   18.  entertainment
+#   x15.  food and groceries
+#   x16.  cell phone
+#   x17.  pets
+#   x18.  entertainment
 #   19.  public transportation
 #   20.  health insurance
 #   21.  education expenses
 #   22.  education loan expenses
-#   23.  side hustle income
+#   x23.  side hustle income (one-off() or income())
 #   24.  
 
 from time_value import *

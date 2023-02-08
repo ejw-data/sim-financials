@@ -94,7 +94,7 @@ class estimator:
     
     def update_savings(self):
         start_year = self.setup['meta']['start_year']
-        end_year = self.setup['meta']['retirement_year'] + 1
+        end_year = self.setup['meta']['end_year']
 
         for year in range(start_year, end_year):
 
@@ -110,7 +110,7 @@ class estimator:
             # calc past savings + all income - all expenses in a year
             income = self.sum_parameters("income", year)
             expenses = self.sum_parameters("expenses", year)
-            current_savings['savings'] = past_savings['savings'] + income - expenses 
+            current_savings['savings'] = round(past_savings['savings'] + income - expenses, 2)
             # print("Savings (", year, "): ", past_savings['savings'], income, expenses )
 
     # INCOME ---------------------------
@@ -152,9 +152,9 @@ class estimator:
     
     # GENERAL Expenses
 
-    def add_general_expense(self, start_year, food=240, tech=35, pet=50):
+    def add_general_expense(self, start_year, food=240, entertainment= 200, tech=35, pet=50):
         # personal items
-        total = food + tech + pet
+        total = food + tech + pet + entertainment
         annual_expense = total*12
         for year in range(start_year, self.setup['meta']['retirement_year'] + 1):
             expense_list = self.setup['balance_sheet'][year]['expenses']
@@ -193,6 +193,42 @@ class estimator:
             
         # after updating income or expenses then run savings update    
         self.update_savings()
+
+
+    def child(self, start_year, number_guardians):
+        end_year = self.setup['meta']['end_year']
+        adult_year = start_year + 18
+        end_year = adult_year if adult_year < end_year else end_year
+
+        expense_list = self.setup['balance_sheet'][start_year]['expenses']
+        expense_list.append({'source':'child birth', 'amount': 1900})
+
+        for year in range(start_year, end_year):
+            income = self.sum_parameters("income", year)
+            #ref: https://en.wikipedia.org/wiki/Cost_of_raising_a_child
+            current_age = year - start_year
+            if number_guardians == 1:
+                if income <40410:
+                    cost = 8019 + 96.86*current_age
+                else:
+                    cost = 16675 + 246.48*current_age
+            else:
+                if income < 59410:
+                    cost = 8826 + 75.62*current_age
+                elif income < 102870:
+                    cost = 11989 + 141.52*current_age
+                else:
+                    cost = 19662 + 264.86*current_age
+            
+            expense_list = self.setup['balance_sheet'][year]['expenses']
+            expense_list.append({'source':'childcare', 'amount': cost})
+            expense_list.append({'source':'college504b', 'amount': 3000})
+
+            assets_list = self.setup['balance_sheet'][year]['assets']
+            assets_list.append({'source':'college504b', 'amount': 3000})
+        # after updating income or expenses then run savings update    
+        self.update_savings()
+    
     # ASSETS
     # HOUSE Purchase
     def add_house(self, selling_price, down_payment, interest_rate, loan_term, start_year):
@@ -223,11 +259,11 @@ class estimator:
             expense_list.append({'source':'mortgage interest', 'amount': round(interest_component,2)})
             expense_list.append({'source':'mortgate principle', 'amount': round(principle_component,2)})
             
-            expense_list = self.setup['balance_sheet'][year]['assets']
-            expense_list.append({'source':'home equity', 'amount': round(principle_component,2)})
+            assets_list = self.setup['balance_sheet'][year]['assets']
+            assets_list.append({'source':'home equity', 'amount': round(principle_component,2)})
 
-            expense_list = self.setup['balance_sheet'][year]['liabilities']
-            expense_list.append({'source':'home principle', 'amount': round(principle,2)})
+            liabilities_list = self.setup['balance_sheet'][year]['liabilities']
+            liabilities_list.append({'source':'home principle', 'amount': round(principle,2)})
 
         # after updating income or expenses then run savings update    
         self.update_savings()
